@@ -1,0 +1,17 @@
+function sampleD(Diameter, Shape, Distribution, Dmax)
+{
+		var D = 0;
+
+		// ----- this section implements von Neumann sampling
+		var fxmax = NDpm3(Diameter, Shape, Distribution); // max cumul. rocks/m^3 at D = Diameter m
+		var W = fxmax;   
+		var fx = -99;  // initialize VN function
+		var xmax = Dmax;  // largest possible rock diameter
+		while(W > fx){  // keep only trials that are less than function 
+			W = fxmax * (Math.random());  // samples function height
+			var x = (xmax - Diameter)*(Math.random())+Diameter; // offset by D
+			fx = NDpm3(x, Shape, Distribution);
+		}
+		D = x;  // if we popped the loop we have a valid diameter
+		return D;
+}

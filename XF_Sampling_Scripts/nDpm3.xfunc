@@ -1,0 +1,75 @@
+// Rock number density per mm^3 per Diameter
+
+function NDpm3(D, Shape, Distribution)
+{
+if (Shape == "Sphere" || Shape == "Cylinder" || Shape == "Torus")
+		{
+		// Technically this is just for cylinders. For spheres and Tori 
+		// you'd have to consider the fact that these shapes curve and 
+		// so they dont uniformly extend into the z-direction.
+		// Luckily, Spheres and Tori arent realistic rock geometries so
+		// for the time being who cares.
+			var GeoConst = 4/Math.PI;
+		}
+	else if (Shape == "Cube")
+		{
+			var GeoConst = 1;
+		}
+	else if (Shape == "Pyramid")
+		{
+			var GeoConst = 1;
+		}
+	else if (Shape == "Cuboid")
+		{
+		// When going from the number density per area to per volume you
+		// have to divide by how far into surface the rock of Diameter D
+		// extends. For a cube this is just D, but for cuboids its determined
+		// by the Height-Diameter ratios
+			if (Distribution == "CE3")
+				{
+					var GeoConst = 1/(0.8*0.31);
+				}
+			else if (Distribution == "CE4")
+				{
+					var GeoConst = 1/(0.8*0.54);
+				}
+			else if (Distribution == "SVII")
+				{
+					var GeoConst = 1/(0.8*0.54);
+				}
+		}
+	else // Default to using Cube geometry if a Shape not intended is used
+		{
+			Output.println("Either no shape was specified or the shape given is not supported.");
+			Output.println("Defaulting to Cube geometry for geometric constant");
+			var GeoConst = 1;
+		}
+	if (Distribution == "CE4")
+		{	
+			k = 0.0021;
+			qk = 0.5648 + 0.01258/k;
+			var N = GeoConst*k*qk*Math.exp(-qk*D)/Math.pow(D,3);
+		}
+	else if (Distribution == "CE3")
+		{
+			k = 0.0135;
+			qk = 1.734;
+			var N = GeoConst*k*qk*Math.exp(-qk*D)/Math.pow(D,3);
+		}
+	else if (Distribution == "SVII")
+		{
+			if (Shape == "Cuboid")
+				{
+					GeoConst = 1/0.54;
+				}
+			else
+				{
+					GeoConst = 1;
+				}
+			// NOTE: The surveyor VII rock distribution is in mm
+			K = 7900/Math.pow(1000, 1.8);
+			gamma = 1.8;
+			var N = GeoConst*K*gamma*Math.pow(D,-(gamma+2));
+		}
+return N
+}

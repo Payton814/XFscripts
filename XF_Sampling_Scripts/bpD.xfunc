@@ -1,0 +1,11 @@
+// Guassian for the width-Diameter ratio of Moon rocks 
+
+// This is from the Demidov and Basilevsky (2014)
+
+function bpD(x){
+	var mean = 0.8;
+	var std = 0.16;
+	var expo = 0.5*Math.pow(((x - mean)/std),2)
+	var p = Math.exp(-expo)
+	return p;
+}

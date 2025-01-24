@@ -1,0 +1,10 @@
+// As of this XF project, LunarVolumeScattering.xf, this function is not used
+
+// Swamee-Ohija approximation to exponential integral
+function expintA(x)
+{
+	var A = Math.log((0.56146/x + 0.65)*(1+x));
+	var B = Math.pow(x,4.) * Math.exp(7.7*x) * Math.pow((2+x),3.7);
+	var Ei = Math.pow( (Math.pow(A,-7.7) + B) , -0.13);
+	return Ei;
+}

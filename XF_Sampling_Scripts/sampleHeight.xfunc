@@ -1,0 +1,16 @@
+// Implement Von Neumann sampling for the height of the rocks
+
+function sampleHeight(D){
+var h = 0;
+var fh = -99;
+var hxmax = D;
+var hymax = 1;
+while(hymax > fh){
+	hymax = Math.random(); // Since the functions are normalized gaussian, only need to sample between 0 and 1
+	var hx = Math.random();
+	fh = hpD(hx);
+	//Output.println(bymax + ", " + fh); 
+	}
+h = hx*D; // If we break the loop then we have selected a width
+return h;
+}

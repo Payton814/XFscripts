@@ -1,0 +1,32 @@
+// As of this XF project, LunarVolumeScattering.xf, this function is not used
+// I sample the volume density PDF instead of the CDF
+
+
+// Implements CE-4 cumulative rock distribution from Wu et al 2021
+// Cumulative Fractional Area with rocks > D is F = 0.0021*exp(-6.555*D)
+function NgtD4(D, Shape)
+{	
+	if (Shape == "Sphere" || Shape == "Cylinder" || Shape == "Torus")
+		{
+			var GeoConst = 4/Math.PI;
+		}
+	else if (Shape == "Cube")
+		{
+			var GeoConst = 1;
+		}
+	else if (Shape == "Pyramid")
+		{
+			var GeoConst = 1;
+		}
+	else if (Shape == "Cuboid")
+		{
+			var GeoConst = 1/0.8;
+		}
+	else // Default to using Sphere geometry
+		{
+			var GeoConst = 4/Math.PI;
+		}
+	var x = 6.555*D; // This is just the exponent
+	var N = GeoConst*0.01376608*(Math.exp(-x)/D - 6.555*expintA(x));
+	return N
+}

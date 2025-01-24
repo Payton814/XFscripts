@@ -1,0 +1,14 @@
+// Monte Carlo integration of the volume density being sampled
+// Inputs: D, Smallest rock diameter being sampled
+// 		   Shape, geometry of the rocks being sampled
+//		   V, Volume being populated
+//		   Dmax, Maximum diameter being sampled
+
+function NumRocks(D, Shape, V, Distribution, Dmax){
+	I = 0;
+for (i = 0;i<100000000;i++){
+		Diam = (Dmax - D)*Math.random() + D;
+		I = I + NDpm3(Diam, Shape, Distribution);
+	}
+	return (I/100000000)*(Dmax - D)*V
+}

@@ -1,0 +1,22 @@
+// Guassian for the height-Diameter ratio of Moon rocks 
+
+function hpD(x, Distribution){
+	if (Distribution == "CE4"){
+		// This is from the Demidov and Basilevsky (2014)
+		var mean = 0.54;
+		var std = 0.03;
+		}
+	else if (Distribution == "SVII"){
+		// This is from the Demidov and Basilevsky (2014)
+		var mean = 0.54;
+		var std = 0.03;
+		}
+	else if (Distribution == "CE3"){
+		// This is from the Di et al. CE3 rock size distribution paper (2015)
+		var mean = 0.31;
+		var std = 0.204;
+		}
+	var expo = 0.5*Math.pow(((x - mean)/std),2)
+	var p = Math.exp(-expo)
+	return p;
+}

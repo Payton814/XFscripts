@@ -1,0 +1,17 @@
+// Implement Von Neumann sampling for the width of the rocks
+
+
+function sampleWidth(D){
+var b = 0;
+var fb = -99;
+var bxmax = D;
+var bymax = 1;
+while(bymax > fb){
+	bymax = Math.random(); // Since the functions are normalized gaussian, only need to sample between 0 and 1
+	var bx = Math.random();
+	fb = bpD(bx);
+	//Output.println(bymax + ", " + fb); 
+	}
+b = bx*D; // If we break the loop then we have selected a width
+return b;
+}

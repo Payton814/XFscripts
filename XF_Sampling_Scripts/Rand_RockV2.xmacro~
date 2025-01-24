@@ -1,0 +1,241 @@
+////////////////////////////////////////////////////////////
+//
+//	Original Programmer: Peter Gorham
+//
+//  Original Script Name: insertRandomSpheresV2 from CoRaLS23_askaryan_export.xf
+//
+//  
+/////////////////////////////////////////////////////////////////////////
+//
+//
+//	Current Version: Rand_RockV2.xmacro
+//	Programmer: Payton Linton
+//  Purpose: As of this point the main rock shapes I am interested in are Cubes, Cuboids, and Spheres
+//			 Previous RandSpheresV# or RandCubesV# used the same number distribution to populate
+//			 However, for different shapes, theres a constant in the distribution that should change.
+//			 This code, along with some functions, aims to take the shape into account 
+//			 and change the constants as needed.
+//
+//  Uses: This version is able to populate the volume according to Chang'E-3, Chang'E-4, and Surveyor VII 
+//		  surface distributions. To determine which distribution to sample from change the distribution variable
+//		  to 'CE3', 'CE4', or 'SVII'.
+
+
+
+var project = App.getActiveProject();
+
+var Diameter = 0.5; // This is the minimum diameter rock that can be sampled.
+
+
+// Shape determines the shape of the rocks being populated.
+// Shape Options: Sphere
+//				  Cube
+//				  Cuboid
+//				  Pyramid
+//				  Cylinder
+//				  Torus
+//
+//	Pyramid, Cylinder, and Torus are just for fun. I have not fully checked they are right and work
+var Shape = "Cuboid"; // Shape determines the shape of the rocks being populated.
+					  // Shape Options: Sphere
+					  //				  Cube
+					  //				  Cuboid
+					  //				  Pyramid
+					  //				  Cylinder
+					  //				  Torus
+					  //
+					  //	Pyramid, Cylinder, and Torus are just for fun. I have not fully checked they are right and work
+
+
+var Distribution = "SVII"; // Distribution Options: CE4
+						   //						CE3
+						   //						SVII
+
+
+var Dmax = 2.0; //Maximum Diameter that could be sampled
+
+var RandOri = false; // If RandOri is set to false then the rocks are give a random rotation in z, but x and y remain 0
+					 // So all rocks are faces normal to z face the same direction
+
+var z_offset = 10; //This is how far we offset the rock assembly from z = 0
+
+var xr = App.getActiveProject().getParameterList().getValue("a"); // Width of the Waveguide
+var yr = App.getActiveProject().getParameterList().getValue("b"); // Height of the waveguide
+var zr = App.getActiveProject().getParameterList().getValue("z") - z_offset; // Length of the waveguide that gets populated with rocks
+																	  // I dont know if it matters, but the -# part is so that there
+																	  // is #m of space with no rocks at the beginning and the end of
+																	  // of the waveguide. This is so the scattered waves have enough
+																	  // space to develop before reaching the end
+
+var Vtotal = Math.abs(xr*yr*zr); // Total volume that the rocks will be populated into
+
+
+var NRocks = NumRocks(Diameter, Shape, Vtotal, Distribution, Dmax); // Monte Carlo integration to determine rock number
+
+
+Output.println("NRocks = " + NRocks);				
+
+
+var assembly = new Assembly();
+assembly.name = "allRocks"
+
+var Vs = 0;
+var Diameters = new Array();
+if (Shape == "Cuboid")
+	{
+	var blist = new Array();
+	var hlist = new Array();
+	}
+var xlist = new Array();
+var ylist = new Array();
+var zlist = new Array();
+
+// From Change-4 rock size distributions:
+// x = 6.555*D
+// cumulative function:
+// N(D) = 0.0175*(exp(-x)/D - 6.555*expint(x))
+// not invertible, and javascript does not have expint.
+// So will need to use Swamee Ohija approx. for expint
+// and Von Neumann sampling
+
+for(i=0; i<NRocks; i++){
+
+		D = sampleD(Diameter, Shape, Distribution, Dmax);
+		if(i%1000 == 0)
+		{
+			Output.println(i);
+		}
+		// From Demidov and Basilevsky 2013.
+		// there is a distribution on the height
+		// and width on the rocks.
+		// h/D = 0.54 +/- 0.03
+		// b/D = 0.8 +/- 0.16
+		// D is the maximum diameter, b is the width, h is the height
+
+		if(Shape == "Sphere"){
+		var s = new Sphere(D/(2));
+		Vs = Vs + 4/3*Math.PI*Math.pow(D/(2), 3);
+		}
+		if(Shape == "Cube"){
+		var s = new Cuboid(D, D, D);
+		Vs = Vs + Math.pow(D, 3);
+		}
+		if(Shape == "Cuboid"){
+		var h = sampleHeight(D);
+		var b = sampleWidth(D);
+		var s = new Cuboid(D, b, h);
+		Vs = Vs + D*h*b;
+		}
+		if(Shape == "Pyramid"){
+		var s = new Pyramid(D,D/Math.sqrt(2),D/Math.sqrt(2), 0, 4);
+		Vs = Vs + Math.pow(D, 3)/3;
+		}
+		if(Shape == "Cylinder"){
+		var s = new Cylinder(D,D/(2));
+		Vs = Vs + Math.PI*Math.pow(D, 3)/4;
+		}
+		if(Shape == "Torus"){
+		var s = new Torus(D/(4),D/(4));
+		Vs = Vs + Math.pow(Math.PI,2)*Math.pow(D, 3)/32;
+		}
+
+		var x = xr*Math.random() - xr/2; // Give the rock a random x position in m
+		var y = yr*Math.random() - yr/2; // Give the rock a random y position in m
+		var z = zr*Math.random() ; 		 // Give the rock a random z position in m
+
+		// Each time this script is run, a csv will be created that saves the rock data
+		Diameters.push(D);
+		if (Shape == "Cuboid")
+			{
+			blist.push(b);
+			hlist.push(h);
+			}
+		xlist.push(x);
+		ylist.push(y);
+		zlist.push(z);
+
+		v = new Cartesian3D(x+" m" ,y+" m", z+" m" );
+		//Output.println( v );
+		if(Shape != "Sphere")
+			{
+			if(RandOri == true)
+				{
+					var rw = 2*Math.PI*Math.random();
+					var ru = 2*Math.PI*Math.random();
+					var rv = 2*Math.PI*Math.random();
+				}
+				else
+				{	
+					var rw = 2*Math.PI*Math.random();
+					var ru = Math.PI;
+					var rv = 0;
+				}
+			}
+
+
+		var rockRecipe = new Recipe();
+		rockRecipe.append( s );
+		var rockModel = new Model();
+		rockModel.setRecipe( rockRecipe );
+		rockModel.name = "randRock " + MathUtils.evaluate(i+1);
+		rockModel.getCoordinateSystem().translate(v);
+		if(Shape != "Sphere")
+		{
+		rockModel.getCoordinateSystem().rotate(0,0,rw);
+		rockModel.getCoordinateSystem().rotate(0,rv,0);
+		rockModel.getCoordinateSystem().rotate(ru,0,0);
+		}
+		var rockElement = assembly.append( rockModel );
+
+
+		//model1 = App.getActiveProject().getGeometryAssembly().append( sphereModel );
+
+		// bring in a material for use with the arm, "Average_regolith" needs to be predefined.
+    	var basaltMaterial = App.getActiveProject().getMaterialList().getMaterial( "Anorthosite" );
+    	if( null == basaltMaterial )
+    	{
+     	   Output.println( "\"Basalt\" material was not found, could not associate with sphere." );
+    	}
+    	else
+    	{
+        	//App.getActiveProject().setMaterial( model1, basaltMaterial );
+        	App.getActiveProject().setMaterial( rockElement, basaltMaterial );
+		}
+
+ //   	var meshParams = project.getMeshParameters( sphereElement);
+ //    	meshParams.setPriority( 75 );   // Higher than 50
+
+
+   		
+	}
+
+// This section saves the rock data to a csv
+var OUTPUT_LOCATION = "CSVFiles/" + Distribution + "_" + Shape + "_" + Diameter + "D_" + Dmax + "Dmax" + xr + "a" + yr + "b" + zr + "d/"; // relative to project directory because first char is not '/'
+//var OUTPUT_LOCATION = "CSVFiles/";
+var paramsList = App.getActiveProject().getParameterList();
+// to create a single value array, we must use bracket notation
+// because new Array(10) tries to create an array of 10 values. Not what we want!
+var a = paramsList.getValue("a");
+var b = paramsList.getValue("b");
+var z = paramsList.getValue("z");
+var OUTPUT_CSV = "RockData_" + a + "a" + b + "b" + (z - z_offset) + "d.csv"
+//var DATA = new Array(a, b, z);
+if(Shape != "Cuboid")
+{
+	var COLUMN_NAMES = new Array("Diameter", "x", "y", "z");
+	var DATA = new Array(Diameters, xlist, ylist, zlist);
+}
+else
+{
+	var COLUMN_NAMES = new Array("Diameter", "b", "h", "x", "y", "z");
+	var DATA = new Array(Diameters, blist, hlist, xlist, ylist, zlist);
+}
+var MODE = IODevice.WriteOnly;
+
+// call function
+var success = exportToCSV(fileName=OUTPUT_CSV, dirName=OUTPUT_LOCATION, columnNames=COLUMN_NAMES, columnData=DATA, mode=MODE);
+
+var frac_V = Vs/Vtotal;
+Output.println("Fractional volume occupied " + frac_V);
+assembly.getCoordinateSystem().translate( Cartesian3D( 0, 0, z_offset/2 ) );
+var spheresInProject = App.getActiveProject().getGeometryAssembly().append( assembly );
